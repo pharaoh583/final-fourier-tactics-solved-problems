@@ -1,6 +1,9 @@
 #include <iostream>
 #include <map>
+#include <algorithm>
 #include <vector>
+#include <numeric>
+#include <sstream>
 
 #define FastIO cin.tie(NULL); ios_base::sync_with_stdio(false)
 #define forn(i,n) for(int i=0; i<int(n); i++)
@@ -17,85 +20,65 @@
 #define el '\n'
 using namespace std;
 
-struct vertex {
-    map<char, int> next, go;
-    int p, link;
-    char pch;
-    vector<int> leaf;
-    vertex(int p = -1, char pch = -1) : p(p), pch(pch), link(-1) {}
-};
-vector<vertex> t;
-void aho_init() {
-    t.clear();
-    t.pb(vertex());
+#define RB(x) (x < n ? r[x] : 0)
+ 
+void csort(vector<int>& sa, vector<int>& r, int k) {
+    int n = sa.size();
+    vector<int> f(max(255, n), 0), t(n);
+    forn(i, n) f[RB(i + k)]++;
+    int sum  = 0;
+    forn(i, max(255, n)) f[i] = (sum += f[i]) - f[i];
+    forn(i, n) t[f[RB(sa[i] + k)]++] = sa[i];
+    sa = t;
 }
-
-void add_string(string s, int id) {
-    int v = 0;
-    for(char c:s) {
-        if(!t[v].next.count(c)) {
-            t[v].next[c] = t.size();
-            t.pb(vertex(v, c));
+ 
+vector<int> constructSA(string& s) {
+    int n = s.size(), rank;
+    vector<int> sa(n), r(n), t(n);
+    forn(i, n) sa[i] = i, r[i] = s[i];
+    for(int k = 1; k < n; k *= 2) {
+        csort(sa, r, k); csort(sa, r, 0);
+        t[sa[0]] = rank = 0;
+        for(int i = 1; i < n; i++) {
+            if(r[sa[i]] != r[sa[i - 1]] or RB(sa[i] + k) != RB(sa[i - 1] + k)) rank++;
+            t[sa[i]] = rank;
         }
-        v = t[v].next[c];
+        r = t;
+        if (r[sa[n - 1]] == n - 1) break;
     }
-    t[v].leaf.pb(id);
+    return sa;
 }
-
-int go(int v, char c);
-
-int get_link(int v) {
-    if(t[v].link < 0) {
-        if(t[v].link < 0) {
-            if(!v or !t[v].p) t[v].link = 0;
-            else t[v].link = go(get_link(t[v].p), t[v].pch);
+ 
+int findRange(string& s1, string& s2, vector<int>& sa) {
+    if (s2.size() < s1.size()) {
+        return 0;
+    }
+    int result_start = 0, result_end = s2.size() - 1;
+    for (int i = 0; i < s1.size(); i++) {
+        int start = lower_bound(sa.begin() + result_start, sa.begin() + result_end + 1, s1[i], [&](int idx, char b) {
+            return idx + i >= s2.size() || s2[idx + i] < b;
+        }) - sa.begin();
+        if (start > result_end || (s2[sa[start] + i]) != s1[i]) {
+            return 0;
         }
+        int end = upper_bound(sa.begin() + result_start, sa.begin() + result_end + 1, s1[i], [&](char b, int idx) {
+            return idx + i < s2.size() && s2[idx + i] > b;
+        }) - sa.begin() - 1;
+        result_start = start;
+        result_end = end;
     }
-    return t[v].link;
+    return result_end - result_start + 1;
 }
-
-int go(int v, char c) {
-    if(!t[v].go.count(c)) {
-        if(!t[v].go.count(c)) t[v].go[c] = t[v].next[c];
-        else t[v].go[c] = v == 0 ? 0 : go(get_link(v), c);
-    }
-    return t[v].go[c];
-}
-
-vector<bool> r;
-bool vis[1<<20];
-
-void proc(int x) {
-    if(x == -1 || vis[x]) return;
-    vis[x] = true;
-    forn(i, t[x].leaf.size()) r[t[x].leaf[i]] = true;
-    proc(t[x].link);
-}
-
-void solve() {
-    aho_init();
-    string text;
-    cin>>text;
-    int q; cin>>q;
-    r = vector<bool>(q, false);
-    forn(k, q){
-        string a; cin>>a;
-        add_string(a, k);
-    }
-    int kk = 0;
-    forn(i, text.size()) {
-        kk = go(kk, text[i]);
-        proc(kk);
-    }
-    forn(i, q) {
-        if(r[i]) cout<<"YES"<<endl;
-        else cout<<"NO"<<endl;
-    }
-}
-
+ 
 int main() {
-    // int t; cin >> t;
-    int t = 1;
-    while(t--) solve();
-    return 0;
+    FastIO;
+    string s; cin>>s;
+    s += '$';
+    vector<int> sa = constructSA(s);
+ 
+    int n; cin>>n;
+    while(n--) {
+        string p; cin>>p;
+        cout<<findRange(p, s, sa)<<el;
+    }
 }
