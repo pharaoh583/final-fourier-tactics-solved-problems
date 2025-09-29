@@ -1,5 +1,6 @@
 #include<iostream>
 #define forn(i, n) for(int i = 0; i < int(n); i++)
+#define FastIO ios_base::sync_with_stdio(false);cin.tie(NULL)
 using namespace std;
 int n, m;
 const int MAXN = 1000;
@@ -36,6 +37,7 @@ int query(int r0, int r1, int c0, int c1) {
     return r;
 }
 int main() {
+    FastIO;
     int q; cin>>n>>q;
     m = n;
     string s; 

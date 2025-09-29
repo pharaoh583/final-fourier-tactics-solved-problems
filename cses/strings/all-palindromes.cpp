@@ -23,15 +23,31 @@ void manacher(string& s) {
 }
 
 void solve() {
-    string s; cin>>s;
-    manacher(s);
-    int res[s.size()]; forn(i, s.size()) res[i] = 1;
-    forn(i, s.size()) {
-        res[i + d1[i] - 1] = max(res[i + d1[i] - 1], 2 * d1[i] - 1);
-        res[i + d2[i] - 1] = max(res[i + d2[i] - 1], 2 * d2[i]);
+    string t; cin>>t;
+    manacher(t);
+    int n = t.size();
+    int maxP[n];
+    forn(i, n) maxP[i] = 1;
+    // maxP[0] = 1;
+
+    for(int i = 1; i < n; i++) {
+
+        if(t[i] == t[i - 1]) maxP[i] = 2;
+        if(i >= 2 and t[i] == t[i - 2]) maxP[i] = 3;
+
+        int s = i - maxP[i - 1] - 1;
+        // cout<<s<<endl;
+        if(s >= 0 and t[s] == t[i]) {
+            maxP[i] = max(maxP[i], maxP[i - 1] + 2);
+        }
     }
 
-    forn(i, s.size()) cout<<res[i]<<" "; cout<<endl;
+    forn(i, n) {
+        maxP[i + d1[i] - 1] = max(maxP[i + d1[i] - 1], 2 * d1[i] - 1);
+        maxP[i + d2[i] - 1] = max(maxP[i + d2[i] - 1], 2 * d2[i]);
+    }
+
+    forn(i, n) cout<<maxP[i]<<" "; cout<<endl;
 }
 
 int main() {
